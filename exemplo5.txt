@@ -1,0 +1,9 @@
+program exemplo5;
+var a, b: boolean;
+begin
+    { Este é um comentário }
+    a := true;
+    b := false;
+    if a <> b then
+        write("Os valores são diferentes.");
+end.

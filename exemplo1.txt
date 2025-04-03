@@ -1,0 +1,6 @@
+program exemplo1;
+{var x, y : integer; erro no codigo}
+begin
+    x := 10;
+    y := x + 5;
+end

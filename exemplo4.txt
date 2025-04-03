@@ -1,0 +1,6 @@
+program exemplo4;
+var nome: string;
+begin
+    read(nome);
+    write("Olá, ", nome);
+end.
