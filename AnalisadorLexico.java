@@ -96,6 +96,17 @@ public class AnalisadorLexico {
             if (character == '{') {
                 while (i < linha.length() && linha.charAt(i) != '}') {
                     i++;
+                    if (i == linha.length()) { // se chegou no final da linha e nao achou o } entao passa para a proxima
+                        try {
+                            linha = codigoPrograma.readLine();
+                            if (linha != null) {
+                                i = 0;
+                            }
+                        } catch (Exception e) {
+                            // TODO: handle exception
+                        }
+
+                    }
                 }
                 i++; // Pular o '}'
                 continue;
@@ -122,17 +133,25 @@ public class AnalisadorLexico {
             }
 
             // Processar identificadores, números e palavras-chave
-            while (i < linha.length() && !marcadores.contains(String.valueOf(linha.charAt(i)))) {
-                palavra += linha.charAt(i);
+            while (i < linha.length()) {
+
+                if (marcadores.contains(String.valueOf(linha.charAt(i)))) {
+                    analisarToken(palavra);
+                    palavra = "";
+                    if (!String.valueOf(linha.charAt(i)).equals(" ")) {
+                        analisarToken(String.valueOf(linha.charAt(i)));
+                    }
+                }
+                else{
+                    palavra += linha.charAt(i);
+                }
                 i++;
                 // System.out.println("Atualizou o i e : " + linha.length() + " e a palvra é: "
                 // + palavra);
             }
-            // System.out.println("Vai analisar o token: " + palavra);
-            analisarToken(palavra);
-            int marcadorPosition = i - 1;
-            if (marcadores.contains(String.valueOf(linha.charAt(marcadorPosition)))) {
-                analisarToken(String.valueOf(linha.charAt(marcadorPosition))); // analisa o marcador
+
+            if (!palavra.equals("")){
+                analisarToken(palavra);
             }
             i++;
         }
@@ -157,6 +176,8 @@ public class AnalisadorLexico {
             tokens.add(new Token("Numérico", palavra));
         } else if (Pattern.matches(identificadores, palavra)) {
             tokens.add(new Token("Identificador", palavra));
+        } else if (marcadores.contains(palavra)) {
+            tokens.add(new Token("Marcador", palavra));
         } else {
             System.out.println("ERRO: Token não reconhecido: " + palavra);
         }
