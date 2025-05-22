@@ -1,9 +1,9 @@
 program exemplo3;
-var contador: integer;
+{var contador: integer;}
 begin
-    contador := 0;
+    var contador := 0;
     while contador < 5 do
     begin
         contador := contador + 1;
     end;
-end.
+end

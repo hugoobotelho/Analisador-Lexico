@@ -31,6 +31,7 @@ public class AnalisadorLexico {
             marcadores.add(")");
             marcadores.add("{");
             marcadores.add("}");
+            marcadores.add("\""); // <- isso mesmo, a aspa dupla como marcador
 
             operadoresRelacionais.add("=");
             operadoresRelacionais.add("<>");
@@ -120,37 +121,46 @@ public class AnalisadorLexico {
             // continue;
             // }
 
-            // Verificar strings literais
-            if (character == '"') {
-                i++;
-                while (i < linha.length() && linha.charAt(i) != '"') {
-                    palavra += linha.charAt(i);
-                    i++;
-                }
-                i++; // Pular o '"'
-                tokens.add(new Token("Literal", palavra));
-                continue;
-            }
 
-            // Processar identificadores, números e palavras-chave
+            // Processar literais, identificadores, números e palavras-chave
             while (i < linha.length()) {
+                String atual = String.valueOf(linha.charAt(i));
 
-                if (marcadores.contains(String.valueOf(linha.charAt(i)))) {
+                if (atual.equals("\"")) {
+                    i++; // Pula a primeira aspa
+                    String literal = "";
+                    while (i < linha.length() && linha.charAt(i) != '"') {
+                        literal += linha.charAt(i);
+                        i++;
+                    }
+
+                    if (i < linha.length() && linha.charAt(i) == '"') {
+                        i++; // Pula a aspa final
+                        tokens.add(new Token("Literal", literal));
+                    } else {
+                        System.out.println("ERRO: Literal não fechado corretamente.");
+                    }
+
+                    palavra = "";
+                    continue;
+                }
+
+                if (marcadores.contains(atual)) {
                     analisarToken(palavra);
                     palavra = "";
-                    if (!String.valueOf(linha.charAt(i)).equals(" ")) {
-                        analisarToken(String.valueOf(linha.charAt(i)));
+                    if (!atual.equals(" ")) {
+                        analisarToken(atual);
                     }
-                }
-                else{
+                } else {
                     palavra += linha.charAt(i);
                 }
                 i++;
+
                 // System.out.println("Atualizou o i e : " + linha.length() + " e a palvra é: "
                 // + palavra);
             }
 
-            if (!palavra.equals("")){
+            if (!palavra.equals("")) {
                 analisarToken(palavra);
             }
             i++;
@@ -184,8 +194,14 @@ public class AnalisadorLexico {
     }
 
     public void imprimirTabelaTokenLexema() {
+        System.out.println("+------------+----------------------+");
+        System.out.println("|   Token    |       Lexema         |");
+        System.out.println("+------------+----------------------+");
         for (Token token : tokens) {
-            System.out.println("Token: " + token.getToken() + " Lexema: " + token.getLexema());
+            System.out.printf("| %-10s | %-20s |%n",
+              token.getToken(),
+              token.getLexema());
         }
+        System.out.println("+------------+----------------------+");
     }
 }

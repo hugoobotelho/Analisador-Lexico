@@ -1,6 +1,6 @@
 program exemplo4;
-var nome: string;
 begin
-    read(nome);
-    write("Olá, ", nome);
-end.
+    var nome := " Marlos "
+    read ( nome ) ;
+    write ( "Ola, " + nome ) ;
+end
