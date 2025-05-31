@@ -1,4 +1,8 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
@@ -11,74 +15,102 @@ public class AnalisadorLexico {
     private ArrayList<String> operadoresAritmeticos = new ArrayList<>();
     private ArrayList<String> operadoresRelacionais = new ArrayList<>();
     private ArrayList<String> atribuicoes = new ArrayList<>();
+    private ArrayList <String> tokensNaoReconhecidos = new ArrayList<>();
     private String numericos;
     private String identificadores;
     private String literais;
     private ArrayList<Token> tokens = new ArrayList<>();
+    private StringBuilder codigoProgramaTeste = new StringBuilder();
 
     public AnalisadorLexico(String caminhoArquivo) {
-        try {
-            // Expressões Regulares para Números, Identificadores e Strings
-            numericos = "^\\d+(\\.\\d+)?$";
-            identificadores = "^[a-zA-Z_]\\w*$";
-            literais = "^\".*\"$";
+        inicializarListasLexicasGlobais();
+        String nomeRecursoNoJar = "/" + caminhoArquivo;
+        InputStream inputStream = AnalisadorLexico.class.getResourceAsStream(nomeRecursoNoJar);
 
-            // Definição dos Tokens Especiais
-            marcadores.add(" ");
-            marcadores.add(",");
-            marcadores.add(";");
-            marcadores.add("(");
-            marcadores.add(")");
-            marcadores.add("{");
-            marcadores.add("}");
-            marcadores.add("\""); // <- isso mesmo, a aspa dupla como marcador
-
-            operadoresRelacionais.add("=");
-            operadoresRelacionais.add("<>");
-            operadoresRelacionais.add("<");
-            operadoresRelacionais.add(">");
-            operadoresRelacionais.add("<=");
-            operadoresRelacionais.add(">=");
-
-            operadoresAritmeticos.add("+");
-            operadoresAritmeticos.add("-");
-            operadoresAritmeticos.add("*");
-            operadoresAritmeticos.add("/");
-
-            atribuicoes.add(":=");
-
-            palavrasReservadas.add("program");
-            palavrasReservadas.add("var");
-            palavrasReservadas.add("begin");
-            palavrasReservadas.add("end");
-            palavrasReservadas.add("if");
-            palavrasReservadas.add("then");
-            palavrasReservadas.add("else");
-            palavrasReservadas.add("while");
-            palavrasReservadas.add("do");
-
-            booleanos.add("true");
-            booleanos.add("false");
-
-            codigoPrograma = new BufferedReader(new FileReader(caminhoArquivo));
-        } catch (FileNotFoundException ex) {
-            System.out.println("Arquivo não encontrado!");
+        if (inputStream == null) {
+            System.out.println("Arquivo não encontrado (" + caminhoArquivo + ")!");
+            throw new RuntimeException("Recurso não encontrado no JAR: " + nomeRecursoNoJar);
         }
+        this.codigoPrograma = new BufferedReader(new InputStreamReader(inputStream));
     }
 
-    public void executar() {
-        System.out.println("Executando a análise léxica...");
+
+    public AnalisadorLexico(Reader leitorDeCodigo) {
+        inicializarListasLexicasGlobais();
+        this.codigoPrograma = new BufferedReader(leitorDeCodigo);
+    }
+
+
+    private void inicializarListasLexicasGlobais() {
+        // Expressões Regulares
+        numericos = "^\\d+(\\.\\d+)?$";
+        identificadores = "^[a-zA-Z_]\\w*$";
+        literais = "^\".*\"$";
+
+        // Definição dos Tokens Especiais
+        marcadores.clear();
+        marcadores.add(" "); marcadores.add(","); marcadores.add(";"); marcadores.add("(");
+        marcadores.add(")"); marcadores.add("{"); marcadores.add("}"); marcadores.add("\"");
+
+        operadoresRelacionais.clear();
+        operadoresRelacionais.add("="); operadoresRelacionais.add("<>"); operadoresRelacionais.add("<");
+        operadoresRelacionais.add(">"); operadoresRelacionais.add("<="); operadoresRelacionais.add(">=");
+
+        operadoresAritmeticos.clear();
+        operadoresAritmeticos.add("+"); operadoresAritmeticos.add("-");
+        operadoresAritmeticos.add("*"); operadoresAritmeticos.add("/");
+
+        atribuicoes.clear();
+        atribuicoes.add(":=");
+
+        palavrasReservadas.clear();
+        palavrasReservadas.add("program");
+        palavrasReservadas.add("var");
+        palavrasReservadas.add("begin");
+        palavrasReservadas.add("end");
+        palavrasReservadas.add("if");
+        palavrasReservadas.add("then");
+        palavrasReservadas.add("else");
+        palavrasReservadas.add("while");
+        palavrasReservadas.add("do");
+        palavrasReservadas.add("write");
+        palavrasReservadas.add("read");
+
+        booleanos.clear();
+        booleanos.add("true"); booleanos.add("false");
+
+        // Inicializa/reseta as listas de resultado e buffer de teste para cada nova análise
+        this.tokens = new ArrayList<>();
+        this.tokensNaoReconhecidos = new ArrayList<>();
+        this.codigoProgramaTeste = new StringBuilder();
+    }
+
+    public ArrayList<Token> executar() {
+        //processando cada linha do arquivo/codigo de entrada
         try {
             String linha;
             while ((linha = codigoPrograma.readLine()) != null) {
-                processarLinha(linha);
+                processarLinha(linha); // Seu método processarLinha
+                codigoProgramaTeste.append(linha);
+                codigoProgramaTeste.append(System.lineSeparator());
             }
-            System.out.println("Analise lexica concluida!");
-            imprimirTabelaTokenLexema();
-        } catch (Exception e) {
-            System.out.println("Erro durante a análise léxica: " + e.getMessage());
+        } catch (IOException e) { // Mais específico para readLine()
+            System.err.println("Erro de I/O durante a análise léxica: " + e.getMessage());
+        } catch (Exception e) { // Captura outras exceções gerais
+            System.err.println("Erro geral durante a análise léxica: " + e.getMessage());
+        } finally {
+            if (this.codigoPrograma != null) {
+                try {
+                    this.codigoPrograma.close();
+                } catch (IOException e) {
+                    System.err.println("Erro ao fechar o stream do código fonte: " + e.getMessage());
+                }
+            }
         }
+
+        return this.tokens;
     }
+
 
     private void processarLinha(String linha) {
         int i = 0;
@@ -92,12 +124,11 @@ public class AnalisadorLexico {
             }
 
             String palavra = "";
-
             // Verificar se é um comentário
             if (character == '{') {
                 while (i < linha.length() && linha.charAt(i) != '}') {
                     i++;
-                    if (i == linha.length()) { // se chegou no final da linha e nao achou o } entao passa para a proxima
+                    if (i == linha.length()) { 
                         try {
                             linha = codigoPrograma.readLine();
                             if (linha != null) {
@@ -112,8 +143,7 @@ public class AnalisadorLexico {
                 i++; // Pular o '}'
                 continue;
             }
-
-            // Verificar operadores compostos como :=
+             // Verificar operadores compostos como :=
             // if (i < linha.length() - 1 && character == ':' && linha.charAt(i + 1) == '=')
             // {
             // tokens.add(new Token("Atribuição", ":="));
@@ -122,12 +152,12 @@ public class AnalisadorLexico {
             // }
 
 
-            // Processar literais, identificadores, números e palavras-chave
+             // Processar literais, identificadores, números e palavras-chave
             while (i < linha.length()) {
                 String atual = String.valueOf(linha.charAt(i));
 
                 if (atual.equals("\"")) {
-                    i++; // Pula a primeira aspa
+                    i++; 
                     String literal = "";
                     while (i < linha.length() && linha.charAt(i) != '"') {
                         literal += linha.charAt(i);
@@ -155,9 +185,6 @@ public class AnalisadorLexico {
                     palavra += linha.charAt(i);
                 }
                 i++;
-
-                // System.out.println("Atualizou o i e : " + linha.length() + " e a palvra é: "
-                // + palavra);
             }
 
             if (!palavra.equals("")) {
@@ -168,7 +195,6 @@ public class AnalisadorLexico {
     }
 
     public void analisarToken(String palavra) {
-        // System.out.println("A PALAVRA E: " + palavra);
         if (palavra.isEmpty())
             return;
 
@@ -189,8 +215,16 @@ public class AnalisadorLexico {
         } else if (marcadores.contains(palavra)) {
             tokens.add(new Token("Marcador", palavra));
         } else {
-            System.out.println("ERRO: Token não reconhecido: " + palavra);
+            tokensNaoReconhecidos.add(palavra);
         }
+    }
+
+    public ArrayList<String> getTokensNaoReconhecidosList() {
+        return this.tokensNaoReconhecidos;
+    }
+
+    public String getCodigoProcessado() {
+        return codigoProgramaTeste.toString();
     }
 
     public void imprimirTabelaTokenLexema() {
@@ -202,6 +236,6 @@ public class AnalisadorLexico {
               token.getToken(),
               token.getLexema());
         }
-        System.out.println("+------------+----------------------+");
+        System.out.println("+------------+----------------------+\n");
     }
 }
