@@ -15,7 +15,8 @@ public class AnalisadorLexico {
     private ArrayList<String> operadoresAritmeticos = new ArrayList<>();
     private ArrayList<String> operadoresRelacionais = new ArrayList<>();
     private ArrayList<String> atribuicoes = new ArrayList<>();
-    private ArrayList <String> tokensNaoReconhecidos = new ArrayList<>();
+    private ArrayList<String> tokensMalFormados = new ArrayList<>();
+    private ArrayList<String> tokensInvalidos = new ArrayList<>();
     private String numericos;
     private String identificadores;
     private String literais;
@@ -34,12 +35,10 @@ public class AnalisadorLexico {
         this.codigoPrograma = new BufferedReader(new InputStreamReader(inputStream));
     }
 
-
     public AnalisadorLexico(Reader leitorDeCodigo) {
         inicializarListasLexicasGlobais();
         this.codigoPrograma = new BufferedReader(leitorDeCodigo);
     }
-
 
     private void inicializarListasLexicasGlobais() {
         // Expressões Regulares
@@ -49,16 +48,28 @@ public class AnalisadorLexico {
 
         // Definição dos Tokens Especiais
         marcadores.clear();
-        marcadores.add(" "); marcadores.add(","); marcadores.add(";"); marcadores.add("(");
-        marcadores.add(")"); marcadores.add("{"); marcadores.add("}"); marcadores.add("\"");
+        marcadores.add(" ");
+        marcadores.add(",");
+        marcadores.add(";");
+        marcadores.add("(");
+        marcadores.add(")");
+        marcadores.add("{");
+        marcadores.add("}");
+        marcadores.add("\"");
 
         operadoresRelacionais.clear();
-        operadoresRelacionais.add("="); operadoresRelacionais.add("<>"); operadoresRelacionais.add("<");
-        operadoresRelacionais.add(">"); operadoresRelacionais.add("<="); operadoresRelacionais.add(">=");
+        operadoresRelacionais.add("=");
+        operadoresRelacionais.add("<>");
+        operadoresRelacionais.add("<");
+        operadoresRelacionais.add(">");
+        operadoresRelacionais.add("<=");
+        operadoresRelacionais.add(">=");
 
         operadoresAritmeticos.clear();
-        operadoresAritmeticos.add("+"); operadoresAritmeticos.add("-");
-        operadoresAritmeticos.add("*"); operadoresAritmeticos.add("/");
+        operadoresAritmeticos.add("+");
+        operadoresAritmeticos.add("-");
+        operadoresAritmeticos.add("*");
+        operadoresAritmeticos.add("/");
 
         atribuicoes.clear();
         atribuicoes.add(":=");
@@ -77,16 +88,19 @@ public class AnalisadorLexico {
         palavrasReservadas.add("read");
 
         booleanos.clear();
-        booleanos.add("true"); booleanos.add("false");
+        booleanos.add("true");
+        booleanos.add("false");
 
-        // Inicializa/reseta as listas de resultado e buffer de teste para cada nova análise
+        // Inicializa/reseta as listas de resultado e buffer de teste para cada nova
+        // análise
         this.tokens = new ArrayList<>();
-        this.tokensNaoReconhecidos = new ArrayList<>();
+        this.tokensMalFormados = new ArrayList<>();
+        this.tokensInvalidos = new ArrayList<>();
         this.codigoProgramaTeste = new StringBuilder();
     }
 
     public ArrayList<Token> executar() {
-        //processando cada linha do arquivo/codigo de entrada
+        // processando cada linha do arquivo/codigo de entrada
         try {
             String linha;
             while ((linha = codigoPrograma.readLine()) != null) {
@@ -111,7 +125,6 @@ public class AnalisadorLexico {
         return this.tokens;
     }
 
-
     private void processarLinha(String linha) {
         int i = 0;
         while (i < linha.length()) {
@@ -128,7 +141,7 @@ public class AnalisadorLexico {
             if (character == '{') {
                 while (i < linha.length() && linha.charAt(i) != '}') {
                     i++;
-                    if (i == linha.length()) { 
+                    if (i == linha.length()) {
                         try {
                             linha = codigoPrograma.readLine();
                             if (linha != null) {
@@ -143,7 +156,7 @@ public class AnalisadorLexico {
                 i++; // Pular o '}'
                 continue;
             }
-             // Verificar operadores compostos como :=
+            // Verificar operadores compostos como :=
             // if (i < linha.length() - 1 && character == ':' && linha.charAt(i + 1) == '=')
             // {
             // tokens.add(new Token("Atribuição", ":="));
@@ -151,38 +164,52 @@ public class AnalisadorLexico {
             // continue;
             // }
 
-
-             // Processar literais, identificadores, números e palavras-chave
+            // Processar literais, identificadores, números e palavras-chave
             while (i < linha.length()) {
-                String atual = String.valueOf(linha.charAt(i));
+                // String atual = String.valueOf(linha.charAt(i));
+                Character atual = linha.charAt(i);
 
-                if (atual.equals("\"")) {
-                    i++; 
-                    String literal = "";
-                    while (i < linha.length() && linha.charAt(i) != '"') {
-                        literal += linha.charAt(i);
-                        i++;
-                    }
-
-                    if (i < linha.length() && linha.charAt(i) == '"') {
-                        i++; // Pula a aspa final
-                        tokens.add(new Token("Literal", literal));
-                    } else {
-                        System.out.println("ERRO: Literal não fechado corretamente.");
-                    }
-
-                    palavra = "";
-                    continue;
-                }
-
-                if (marcadores.contains(atual)) {
+                // if (marcadores.contains(atual)) {
+                if (!Character.isLetterOrDigit(atual)) {
                     analisarToken(palavra);
                     palavra = "";
-                    if (!atual.equals(" ")) {
-                        analisarToken(atual);
+
+                    if (atual == '"') {
+                        i++;
+                        String literal = "";
+                        while (i < linha.length() && linha.charAt(i) != '"') {
+                            literal += linha.charAt(i);
+                            i++;
+                        }
+
+                        if (i < linha.length() && linha.charAt(i) == '"') {
+                            i++; // Pula a aspa final
+                            tokens.add(new Token("Literal", literal));
+                        } else {
+                            System.out.println("ERRO: Literal não fechado corretamente.");
+                        }
+
+                        palavra = "";
+                        continue;
+                    } else if ((atual == '>' || atual == '<' || atual == ':') && i + 1 < linha.length()) {
+                        char proximo = linha.charAt(i + 1);
+                        if (proximo == '=' || (atual == '<' && proximo == '>')) {
+                            palavra = atual.toString() + proximo;
+                            analisarToken(palavra);
+                            i++; // avança 1 extra por ser composto
+                            palavra = "";
+                        } else {
+                            analisarToken(atual.toString());
+                        }
+                    }
+
+                    else if (!Character.isWhitespace(atual)) {
+                        analisarToken(atual.toString());
                     }
                 } else {
-                    palavra += linha.charAt(i);
+                    if (!Character.isWhitespace(atual)) {
+                        palavra += linha.charAt(i);
+                    }
                 }
                 i++;
             }
@@ -215,12 +242,33 @@ public class AnalisadorLexico {
         } else if (marcadores.contains(palavra)) {
             tokens.add(new Token("Marcador", palavra));
         } else {
-            tokensNaoReconhecidos.add(palavra);
+            if (contidoNoAlfabeto(palavra)) {
+                // System.out.println("Token mal formado: " + palavra);
+                tokensMalFormados.add(palavra);
+            } else {
+                // System.out.println("Token inválido: " + palavra);
+                tokensInvalidos.add(palavra);
+            }
         }
     }
 
-    public ArrayList<String> getTokensNaoReconhecidosList() {
-        return this.tokensNaoReconhecidos;
+    private boolean contidoNoAlfabeto(String palavra) {
+        String alfabeto = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_:;,.(){}+-*/<>=!\" ";
+
+        for (char c : palavra.toCharArray()) {
+            if (alfabeto.indexOf(c) == -1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public ArrayList<String> getTokensMalFormados() {
+        return this.tokensMalFormados;
+    }
+
+    public ArrayList<String> getTokensInvalidos() {
+        return this.tokensInvalidos;
     }
 
     public String getCodigoProcessado() {
@@ -233,8 +281,8 @@ public class AnalisadorLexico {
         System.out.println("+------------+----------------------+");
         for (Token token : tokens) {
             System.out.printf("| %-10s | %-20s |%n",
-              token.getToken(),
-              token.getLexema());
+                    token.getToken(),
+                    token.getLexema());
         }
         System.out.println("+------------+----------------------+\n");
     }

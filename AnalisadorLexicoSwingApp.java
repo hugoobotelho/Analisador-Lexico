@@ -1,3 +1,4 @@
+
 // AnalisadorLexicoSwingApp.java
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,7 +18,9 @@ public class AnalisadorLexicoSwingApp extends JFrame {
   private DefaultTableModel tableModel;
   private JRadioButton radioEscolherArquivo, radioDigitarCodigo;
   private ButtonGroup modoEntradaGrupo;
-  private final String[] arquivosExemplo = {"exemplo1.txt", "exemplo2.txt", "exemplo3.txt", "exemplo4.txt", "exemplo5.txt"};
+  private final String[] arquivosExemplo = { "exemplo1.txt", "exemplo2.txt", "exemplo3.txt", "exemplo4.txt",
+      "exemplo5.txt" };
+
   public AnalisadorLexicoSwingApp() {
     super("Analisador Léxico");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -46,7 +49,7 @@ public class AnalisadorLexicoSwingApp extends JFrame {
 
     analisarButton = new JButton("Analisar Código");
 
-    String[] nomeColunas = {"Token", "Lexema"};
+    String[] nomeColunas = { "Token", "Lexema" };
     tableModel = new DefaultTableModel(nomeColunas, 0) {
       @Override
       public boolean isCellEditable(int row, int column) {
@@ -77,7 +80,8 @@ public class AnalisadorLexicoSwingApp extends JFrame {
 
     // ***** MODIFICAÇÃO PARA CENTRALIZAR O LABEL *****
     JLabel labelCodigoAnalise = new JLabel("Digite abaixo o código para análise:");
-    // labelCodigoAnalise.setFont(new Font("SansSerif", Font.BOLD, 12)); // Opcional: para dar destaque
+    // labelCodigoAnalise.setFont(new Font("SansSerif", Font.BOLD, 12)); //
+    // Opcional: para dar destaque
 
     JPanel painelLabelCodigo = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Usa FlowLayout.CENTER
     painelLabelCodigo.add(labelCodigoAnalise);
@@ -85,12 +89,16 @@ public class AnalisadorLexicoSwingApp extends JFrame {
     // *************************************************
 
     JScrollPane scrollTextArea = new JScrollPane(codigoTextArea);
-    // Para garantir que o JScrollPane não se estique demais verticalmente dentro do BoxLayout
+    // Para garantir que o JScrollPane não se estique demais verticalmente dentro do
+    // BoxLayout
     // e que o JTextArea tenha um tamanho preferencial respeitado pelo scrollpane:
     // Dimension textAreaSize = new Dimension(400, 200); // Exemplo de tamanho
-    // codigoTextArea.setPreferredScrollableViewportSize(textAreaSize); // Se o JTextArea for muito pequeno
-    // scrollTextArea.setPreferredSize(textAreaSize); // Define o tamanho preferido do ScrollPane
-    // scrollTextArea.setMaximumSize(new Dimension(Integer.MAX_VALUE, textAreaSize.height + 20)); // Limita altura máxima
+    // codigoTextArea.setPreferredScrollableViewportSize(textAreaSize); // Se o
+    // JTextArea for muito pequeno
+    // scrollTextArea.setPreferredSize(textAreaSize); // Define o tamanho preferido
+    // do ScrollPane
+    // scrollTextArea.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+    // textAreaSize.height + 20)); // Limita altura máxima
 
     painelEntradaPrincipal.add(scrollTextArea);
 
@@ -133,7 +141,8 @@ public class AnalisadorLexicoSwingApp extends JFrame {
     tableModel.setRowCount(0);
     AnalisadorLexico analisador;
     ArrayList<Token> resultados;
-    ArrayList<String> naoReconhecidos;
+    ArrayList<String> tokensMalFormados;
+    ArrayList<String> tokensInvalidos;
 
     try {
       if (radioEscolherArquivo.isSelected()) {
@@ -146,37 +155,55 @@ public class AnalisadorLexicoSwingApp extends JFrame {
       } else {
         String codigo = codigoTextArea.getText();
         if (codigo.trim().isEmpty()) {
-          JOptionPane.showMessageDialog(this, "Digite ou cole um código para analisar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+          JOptionPane.showMessageDialog(this, "Digite ou cole um código para analisar.", "Aviso",
+              JOptionPane.WARNING_MESSAGE);
           return;
         }
         analisador = new AnalisadorLexico(new StringReader(codigo));
       }
 
       resultados = analisador.executar();
-      naoReconhecidos = analisador.getTokensNaoReconhecidosList();
+      tokensMalFormados = analisador.getTokensMalFormados();
+      tokensInvalidos = analisador.getTokensInvalidos();
 
       if (resultados != null) {
         for (Token token : resultados) {
-          tableModel.addRow(new Object[]{token.getToken(), token.getLexema()});
+          tableModel.addRow(new Object[] { token.getToken(), token.getLexema() });
         }
       }
 
-      if (naoReconhecidos != null && !naoReconhecidos.isEmpty()) {
-        StringBuilder sb = new StringBuilder("Tokens não reconhecidos:\n");
-        for (String unr : naoReconhecidos) {
-          sb.append("- '").append(unr).append("'\n");
+      if (!tokensMalFormados.isEmpty() || !tokensInvalidos.isEmpty()) {
+        StringBuilder sb = new StringBuilder("Tokens com problemas:\n");
+
+        if (!tokensMalFormados.isEmpty()) {
+          sb.append("\nTokens mal formados:\n");
+          for (String t : tokensMalFormados) {
+            sb.append("- ").append(t).append("\n");
+          }
         }
-        JOptionPane.showMessageDialog(this, sb.toString(), "Atenção", JOptionPane.WARNING_MESSAGE);
-      } else if (resultados != null && resultados.isEmpty() && (naoReconhecidos == null || naoReconhecidos.isEmpty())) {
-        JOptionPane.showMessageDialog(this, "Nenhum token reconhecido.", "Análise Concluída", JOptionPane.INFORMATION_MESSAGE);
-      } else if (resultados != null && !resultados.isEmpty() && (naoReconhecidos == null || naoReconhecidos.isEmpty())){
-        JOptionPane.showMessageDialog(this, "Análise léxica finalizada com sucesso!", "Análise Concluída", JOptionPane.INFORMATION_MESSAGE);
+
+        if (!tokensInvalidos.isEmpty()) {
+          sb.append("\nTokens inválidos:\n");
+          for (String t : tokensInvalidos) {
+            sb.append("- ").append(t).append("\n");
+          }
+        }
+
+        JOptionPane.showMessageDialog(this, sb.toString(), "Aviso", JOptionPane.WARNING_MESSAGE);
+      } else if (resultados != null && resultados.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Nenhum token reconhecido.", "Análise Concluída",
+            JOptionPane.INFORMATION_MESSAGE);
+      } else {
+        JOptionPane.showMessageDialog(this, "Análise léxica finalizada com sucesso!", "Análise Concluída",
+            JOptionPane.INFORMATION_MESSAGE);
       }
 
     } catch (RuntimeException re) {
-      JOptionPane.showMessageDialog(this, "Erro ao analisar: " + re.getMessage(), "Erro de Análise", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Erro ao analisar: " + re.getMessage(), "Erro de Análise",
+          JOptionPane.ERROR_MESSAGE);
     } catch (Exception ex) {
-      JOptionPane.showMessageDialog(this, "Erro inesperado: " + ex.getMessage(), "Erro Crítico", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Erro inesperado: " + ex.getMessage(), "Erro Crítico",
+          JOptionPane.ERROR_MESSAGE);
     }
   }
 

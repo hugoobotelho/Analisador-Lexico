@@ -1,10 +1,10 @@
 program exemplo2;
-var a, b : integer;
+var a, b : @integer;
 begin
     a := 5;
     b := 10;
     if a < b then
-        a := a + 1
+        a := 2a + 1
     else
         b := b - 1;
 end
