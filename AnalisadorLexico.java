@@ -15,8 +15,6 @@ public class AnalisadorLexico {
     private ArrayList<String> operadoresAritmeticos = new ArrayList<>();
     private ArrayList<String> operadoresRelacionais = new ArrayList<>();
     private ArrayList<String> atribuicoes = new ArrayList<>();
-    private ArrayList<String> tokensMalFormados = new ArrayList<>();
-    private ArrayList<String> tokensInvalidos = new ArrayList<>();
     private String numericos;
     private String identificadores;
     private String literais;
@@ -94,8 +92,6 @@ public class AnalisadorLexico {
         // Inicializa/reseta as listas de resultado e buffer de teste para cada nova
         // análise
         this.tokens = new ArrayList<>();
-        this.tokensMalFormados = new ArrayList<>();
-        this.tokensInvalidos = new ArrayList<>();
         this.codigoProgramaTeste = new StringBuilder();
     }
 
@@ -226,28 +222,26 @@ public class AnalisadorLexico {
             return;
 
         if (palavrasReservadas.contains(palavra)) {
-            tokens.add(new Token("Palavra Reservada", palavra));
+            tokens.add(new Token(palavra, "Palavra Reservada"));
         } else if (operadoresAritmeticos.contains(palavra)) {
-            tokens.add(new Token("Operador aritmetico", palavra));
+            tokens.add(new Token(palavra, "Operador aritmetico"));
         } else if (operadoresRelacionais.contains(palavra)) {
-            tokens.add(new Token("Operador relacional", palavra));
+            tokens.add(new Token(palavra,"Operador relacional"));
         } else if (atribuicoes.contains(palavra)) {
-            tokens.add(new Token("Atribuicao", palavra));
+            tokens.add(new Token(palavra,"Atribuicao"));
         } else if (booleanos.contains(palavra)) {
-            tokens.add(new Token("Booleano", palavra));
+            tokens.add(new Token(palavra,"Booleano"));
         } else if (Pattern.matches(numericos, palavra)) {
-            tokens.add(new Token("Numérico", palavra));
+            tokens.add(new Token(palavra,"Numérico"));
         } else if (Pattern.matches(identificadores, palavra)) {
-            tokens.add(new Token("Identificador", palavra));
+            tokens.add(new Token(palavra,"Identificador"));
         } else if (marcadores.contains(palavra)) {
-            tokens.add(new Token("Marcador", palavra));
+            tokens.add(new Token(palavra,"Marcador"));
         } else {
             if (contidoNoAlfabeto(palavra)) {
-                // System.out.println("Token mal formado: " + palavra);
-                tokensMalFormados.add(palavra);
+                tokens.add(new Token(palavra,"Identificador mal formado"));
             } else {
-                // System.out.println("Token inválido: " + palavra);
-                tokensInvalidos.add(palavra);
+                tokens.add(new Token(palavra,"Token inválido"));
             }
         }
     }
@@ -263,13 +257,7 @@ public class AnalisadorLexico {
         return true;
     }
 
-    public ArrayList<String> getTokensMalFormados() {
-        return this.tokensMalFormados;
-    }
-
-    public ArrayList<String> getTokensInvalidos() {
-        return this.tokensInvalidos;
-    }
+ 
 
     public String getCodigoProcessado() {
         return codigoProgramaTeste.toString();

@@ -1,5 +1,3 @@
-
-// AnalisadorLexicoSwingApp.java
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -9,7 +7,7 @@ import java.awt.event.ActionListener;
 import java.io.StringReader;
 import java.util.ArrayList;
 
-public class AnalisadorLexicoSwingApp extends JFrame {
+public class AnalisadorLexicoGUI extends JFrame {
 
   private JComboBox<String> arquivoComboBox;
   private JTextArea codigoTextArea;
@@ -21,7 +19,7 @@ public class AnalisadorLexicoSwingApp extends JFrame {
   private final String[] arquivosExemplo = { "exemplo1.txt", "exemplo2.txt", "exemplo3.txt", "exemplo4.txt",
       "exemplo5.txt" };
 
-  public AnalisadorLexicoSwingApp() {
+  public AnalisadorLexicoGUI() {
     super("Analisador Léxico");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setSize(800, 700);
@@ -77,28 +75,13 @@ public class AnalisadorLexicoSwingApp extends JFrame {
     painelEntradaPrincipal.add(painelArquivoCombo);
 
     painelEntradaPrincipal.add(Box.createRigidArea(new Dimension(0, 5)));
-
-    // ***** MODIFICAÇÃO PARA CENTRALIZAR O LABEL *****
     JLabel labelCodigoAnalise = new JLabel("Digite abaixo o código para análise:");
-    // labelCodigoAnalise.setFont(new Font("SansSerif", Font.BOLD, 12)); //
-    // Opcional: para dar destaque
 
-    JPanel painelLabelCodigo = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Usa FlowLayout.CENTER
+    JPanel painelLabelCodigo = new JPanel(new FlowLayout(FlowLayout.CENTER)); 
     painelLabelCodigo.add(labelCodigoAnalise);
-    painelEntradaPrincipal.add(painelLabelCodigo); // Adiciona o painel com o label centralizado
-    // *************************************************
+    painelEntradaPrincipal.add(painelLabelCodigo); 
 
     JScrollPane scrollTextArea = new JScrollPane(codigoTextArea);
-    // Para garantir que o JScrollPane não se estique demais verticalmente dentro do
-    // BoxLayout
-    // e que o JTextArea tenha um tamanho preferencial respeitado pelo scrollpane:
-    // Dimension textAreaSize = new Dimension(400, 200); // Exemplo de tamanho
-    // codigoTextArea.setPreferredScrollableViewportSize(textAreaSize); // Se o
-    // JTextArea for muito pequeno
-    // scrollTextArea.setPreferredSize(textAreaSize); // Define o tamanho preferido
-    // do ScrollPane
-    // scrollTextArea.setMaximumSize(new Dimension(Integer.MAX_VALUE,
-    // textAreaSize.height + 20)); // Limita altura máxima
 
     painelEntradaPrincipal.add(scrollTextArea);
 
@@ -141,8 +124,6 @@ public class AnalisadorLexicoSwingApp extends JFrame {
     tableModel.setRowCount(0);
     AnalisadorLexico analisador;
     ArrayList<Token> resultados;
-    ArrayList<String> tokensMalFormados;
-    ArrayList<String> tokensInvalidos;
 
     try {
       if (radioEscolherArquivo.isSelected()) {
@@ -163,40 +144,14 @@ public class AnalisadorLexicoSwingApp extends JFrame {
       }
 
       resultados = analisador.executar();
-      tokensMalFormados = analisador.getTokensMalFormados();
-      tokensInvalidos = analisador.getTokensInvalidos();
 
       if (resultados != null) {
         for (Token token : resultados) {
           tableModel.addRow(new Object[] { token.getToken(), token.getLexema() });
         }
       }
-
-      if (!tokensMalFormados.isEmpty() || !tokensInvalidos.isEmpty()) {
-        StringBuilder sb = new StringBuilder("Tokens com problemas:\n");
-
-        if (!tokensMalFormados.isEmpty()) {
-          sb.append("\nTokens mal formados:\n");
-          for (String t : tokensMalFormados) {
-            sb.append("- ").append(t).append("\n");
-          }
-        }
-
-        if (!tokensInvalidos.isEmpty()) {
-          sb.append("\nTokens inválidos:\n");
-          for (String t : tokensInvalidos) {
-            sb.append("- ").append(t).append("\n");
-          }
-        }
-
-        JOptionPane.showMessageDialog(this, sb.toString(), "Aviso", JOptionPane.WARNING_MESSAGE);
-      } else if (resultados != null && resultados.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Nenhum token reconhecido.", "Análise Concluída",
-            JOptionPane.INFORMATION_MESSAGE);
-      } else {
         JOptionPane.showMessageDialog(this, "Análise léxica finalizada com sucesso!", "Análise Concluída",
             JOptionPane.INFORMATION_MESSAGE);
-      }
 
     } catch (RuntimeException re) {
       JOptionPane.showMessageDialog(this, "Erro ao analisar: " + re.getMessage(), "Erro de Análise",
@@ -218,7 +173,7 @@ public class AnalisadorLexicoSwingApp extends JFrame {
     } catch (Exception e) {
     }
     try {
-      UIManager.put("ScrollBar.width", 5); // Mantenha esta linha se quiser forçar a largura
+      UIManager.put("ScrollBar.width", 5); 
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     } catch (Exception e) {
       e.printStackTrace();
@@ -226,7 +181,7 @@ public class AnalisadorLexicoSwingApp extends JFrame {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        new AnalisadorLexicoSwingApp().setVisible(true);
+        new AnalisadorLexicoGUI().setVisible(true);
       }
     });
   }
